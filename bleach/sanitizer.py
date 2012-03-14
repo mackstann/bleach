@@ -10,6 +10,7 @@ class BleachSanitizerMixin(HTMLSanitizerMixin):
     """Mixin to replace sanitize_token() and sanitize_css()."""
 
     allowed_svg_properties = []
+    in_killed_element = False
 
     def sanitize_token(self, token):
         """Sanitize a token either by HTML-encoding or dropping.
@@ -26,6 +27,14 @@ class BleachSanitizerMixin(HTMLSanitizerMixin):
         if (getattr(self, 'wildcard_attributes', None) is None and
             isinstance(self.allowed_attributes, dict)):
             self.wildcard_attributes = self.allowed_attributes.get('*', [])
+
+        if token['type'] in (tokenTypes['StartTag'], tokenTypes['EndTag']):
+            if token['name'] in self.kill_elements:
+                self.in_killed_element = token['type'] == tokenTypes['StartTag']
+                return None
+
+        if self.in_killed_element:
+            return None
 
         if token['type'] in (tokenTypes['StartTag'], tokenTypes['EndTag'],
                              tokenTypes['EmptyTag']):

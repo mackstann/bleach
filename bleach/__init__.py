@@ -34,6 +34,8 @@ ALLOWED_TAGS = [
     'ul',
 ]
 
+KILL_TAGS = []
+
 ALLOWED_ATTRIBUTES = {
     'a': ['href', 'title'],
     'abbr': ['title'],
@@ -87,7 +89,8 @@ identity = lambda x: x  # The identity function.
 
 
 def clean(text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
-          styles=ALLOWED_STYLES, strip=False, strip_comments=True):
+          styles=ALLOWED_STYLES, kill_tags=KILL_TAGS, strip=False,
+          strip_comments=True):
     """Clean an HTML fragment and return it"""
     if not text:
         return u''
@@ -96,10 +99,14 @@ def clean(text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
     if text.startswith(u'<!--'):
         text = u' ' + text
 
+    if set(tags) & set(kill_tags):
+        raise ValueError("The same tag cannot be in both tags and kill_tags")
+
     class s(BleachSanitizer):
         allowed_elements = tags
         allowed_attributes = attributes
         allowed_css_properties = styles
+        kill_elements = kill_tags
         strip_disallowed_elements = strip
         strip_html_comments = strip_comments
 
